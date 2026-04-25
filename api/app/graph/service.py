@@ -75,12 +75,12 @@ class GraphService:
                     merged["name"] = old_name if len(old_name) >= len(new_name) else new_name
                     conn.execute(
                         """UPDATE graph_node SET node_type = ?, props = ? WHERE node_id = ?""",
-                        (n.node_type, merged if is_postgres() else json.dumps(merged), n.node_id),
+                        (n.node_type, json.dumps(merged), n.node_id),
                     )
                 else:
                     conn.execute(
                         """INSERT INTO graph_node (node_id, node_type, props) VALUES (?, ?, ?)""",
-                        (n.node_id, n.node_type, n.props if is_postgres() else json.dumps(n.props)),
+                        (n.node_id, n.node_type, json.dumps(n.props)),
                     )
             conn.commit()
             return len(nodes)
@@ -113,7 +113,7 @@ class GraphService:
                         e.weight,
                         e.valid_from,
                         e.valid_to,
-                        e.provenance if is_postgres() else json.dumps(e.provenance),
+                        json.dumps(e.provenance),
                     ),
                 )
             conn.commit()
