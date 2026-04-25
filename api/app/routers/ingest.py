@@ -19,6 +19,7 @@ from app.db.supabase_client import (
     is_supabase_configured,
     upload_to_storage,
 )
+from app.llm.ollama_client import LLMUnavailableError
 from app.orchestrator.models import StepResult
 from app.orchestrator.orchestrator import Orchestrator
 
@@ -125,16 +126,23 @@ async def upload_file(
                 safe_name, exc_info=True,
             )
 
-    result = await _orch.ingest_blob(
-        blob_id=blob_id,
-        source_id=source_id,
-        path=str(file_path),
-        mime=mime,
-        institution_id=institution_id,
-        period=period,
-        size_bytes=size_bytes,
-        trace_id=trace_id,
-    )
+    try:
+        result = await _orch.ingest_blob(
+            blob_id=blob_id,
+            source_id=source_id,
+            path=str(file_path),
+            mime=mime,
+            institution_id=institution_id,
+            period=period,
+            size_bytes=size_bytes,
+            trace_id=trace_id,
+        )
+    except LLMUnavailableError as e:
+        logger.error(f"Ingestion failed due to LLM error: {e}")
+        raise HTTPException(
+            status_code=503,
+            detail=f"LLM Provider Error: {str(e)}"
+        )
     return IngestResponse(
         memory_id=result.memory_id,
         trace_id=result.trace_id,
