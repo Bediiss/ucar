@@ -128,6 +128,20 @@ async def ping_ollama() -> bool:
         return False
 
 
+async def check_llm_health() -> bool:
+    """Check if the currently resolved LLM provider is available.
+    
+    For cloud providers, this checks if the API key is configured.
+    For local Ollama, it pings the service.
+    """
+    provider = _resolve_provider()
+    if not provider:
+        return False
+    if provider == "ollama":
+        return await ping_ollama()
+    return _is_configured(provider)
+
+
 async def _gemini_generate(
     prompt: str,
     *,
